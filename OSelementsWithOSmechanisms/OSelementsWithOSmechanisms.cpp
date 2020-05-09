@@ -8,12 +8,13 @@
 #include <chrono>
 #include <future>
 #include <windows.h>
-#include <utility>
+#include <mutex>
+#include <sstream>
 
 
 using namespace std;
 
-const int F_INPUT = 3;
+const int F_INPUT = 4;
 const int G_INPUT = 3;
 
 int f(int x);
@@ -22,35 +23,33 @@ int g(int x);
 bool fDone = false;
 bool gDone = false;
 
+bool ready = true;
+condition_variable cv;
+
+mutex m;
+
 int main()
 {
-	// Create a promise and get its future.
-	//promise<int> fPromise;
-	//promise<int> gPromise;
-
-	//future<int> fResult = fPromise.get_future();
-	//future<int> gResult = gPromise.get_future();
-
-	//thread fThread(f, move(fPromise), F_INPUT);
-	//thread gThread(g, move(gPromise), G_INPUT);
-
 	auto fFuture = async(f, F_INPUT);
 	auto gFuture = async(g, G_INPUT);
 
-	cout << "Threads are now running" << endl;
-	//auto th1 = async(f, F_INPUT);
-	//auto th2 = async(g, G_INPUT);
+	cout << "Threads are now running...\n" << endl;
 	
 	bool userInteraction = true;
 
 	while (!fDone || !gDone)
 	{
-		Sleep(10000);
 		if (userInteraction)
 		{
+			Sleep(10000);
+			unique_lock<mutex> lk(m);
+			ready = false;
 			char decision;
 			cout << "Continue execution - [1]\nWait for all the threads to finish execution - [2]\nBreak execution - [3]?" << endl;
 			cin >> decision;
+			ready = true;
+			cv.notify_all();
+			lk.unlock();
 
 			if (decision == '1')
 			{
@@ -83,11 +82,22 @@ int f(int x)
 
 	for (int i = x; i > 0; --i)
 	{
-		//cout << endl << "Function F now sleeps for " << i << " seconds" << endl;
+		stringstream ss;
+		ss << this_thread::get_id();
+		string message = "Function F now sleeps for " + to_string(i) + " seconds. [thread id = " + ss.str() + "]\n";
+		cout << message;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
+		if (!ready)
+		{
+			std::unique_lock<mutex> lk(m);
+			cv.wait(lk, [] {return ready; });
+			lk.unlock();
+		}
 	}
 
+	cout << "Function F has finished its execution.\n";
+	
 	fDone = true;
 	return result;
 }
@@ -98,10 +108,21 @@ int g(int x)
 
 	for (int i = 2*x; i > 0; --i)
 	{
-		//cout << endl << "Function G now sleeps for " << i << " seconds" << endl;
+		stringstream ss;
+		ss << this_thread::get_id();
+		string message = "Function G now sleeps for " + to_string(i) + " seconds. [thread id = " + ss.str() + "]\n";
+		cout << message;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
+		if (!ready)
+		{
+			std::unique_lock<mutex> lk(m);
+			cv.wait(lk, [] {return ready; });
+			lk.unlock();
+		}
 	}
+
+	cout << "Function G has finished its execution.\n";
 
 	gDone = true;
 	return result;
