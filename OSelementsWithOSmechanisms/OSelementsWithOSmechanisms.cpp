@@ -17,6 +17,9 @@ const int G_INPUT = 3;
 int f(int x);
 int g(int x);
 
+bool fDone = false;
+bool gDone = false;
+
 int main()
 {
 	// Create a promise and get its future.
@@ -84,6 +87,7 @@ int f(int x)
 		this_thread::sleep_for(chrono::seconds(i));
 	}
 
+	fDone = true;
 	return result;
 }
 
@@ -98,6 +102,7 @@ int g(int x)
 		this_thread::sleep_for(chrono::seconds(i));
 	}
 
+	gDone = true;
 	return result;
 }
 
