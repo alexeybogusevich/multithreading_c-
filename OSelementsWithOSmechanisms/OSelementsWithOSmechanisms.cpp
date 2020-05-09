@@ -9,14 +9,10 @@
 #include <future>
 #include <windows.h>
 
-
-
-
-
 using namespace std;
 
-const int F_INPUT = 5;
-const int G_INPUT = 10;
+const int F_INPUT = 3;
+const int G_INPUT = 3;
 
 int f(int x);
 int g(int x);
@@ -27,10 +23,8 @@ int main()
 	promise<bool> p;
 	auto future = p.get_future();
 
-	thread th1(f, F_INPUT);
-	th1.detach();
-	thread th2(g, G_INPUT);
-	th2.detach();
+	auto th1 = async(f, F_INPUT);
+	auto th2 = async(g, G_INPUT);
 
 	bool finished = false;
 
@@ -71,7 +65,11 @@ int main()
 			}
 		}
 	}
-	std::future<int> ret = std::async(&f);
+	
+	cout << th1.get() << endl;
+	cout << th2.get() << endl;
+
+	return 0;
 }
 
 int f(int x)
@@ -80,7 +78,7 @@ int f(int x)
 
 	for (int i = x; i > 0; --i)
 	{
-		//cout << "Function F now sleeps for " << i << " seconds" << endl;
+		cout << endl << "Function F now sleeps for " << i << " seconds" << endl;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
 	}
@@ -94,7 +92,7 @@ int g(int x)
 
 	for (int i = 2*x; i > 0; --i)
 	{
-		//cout << "Function G now sleeps for " << i << " seconds" << endl;
+		cout << endl << "Function G now sleeps for " << i << " seconds" << endl;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
 	}
