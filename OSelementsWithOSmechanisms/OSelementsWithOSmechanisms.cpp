@@ -49,6 +49,7 @@ int main()
 
 			char decision;
 			cout << "Would you like to wait for the threads to finish processing? [y/n]" << endl;
+			
 			cin >> decision;
 
 			if (decision == 'y')
