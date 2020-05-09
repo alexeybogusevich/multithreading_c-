@@ -8,6 +8,8 @@
 #include <chrono>
 #include <future>
 #include <windows.h>
+#include <utility>
+
 
 using namespace std;
 
@@ -23,43 +25,42 @@ bool gDone = false;
 int main()
 {
 	// Create a promise and get its future.
-	promise<bool> p;
-	auto future = p.get_future();
+	//promise<int> fPromise;
+	//promise<int> gPromise;
 
-	auto th1 = async(f, F_INPUT);
-	auto th2 = async(g, G_INPUT);
+	//future<int> fResult = fPromise.get_future();
+	//future<int> gResult = gPromise.get_future();
+
+	//thread fThread(f, move(fPromise), F_INPUT);
+	//thread gThread(g, move(gPromise), G_INPUT);
+
+	auto fFuture = async(f, F_INPUT);
+	auto gFuture = async(g, G_INPUT);
+
+	cout << "Threads are now running" << endl;
+	//auto th1 = async(f, F_INPUT);
+	//auto th2 = async(g, G_INPUT);
 	
-	bool finished = false;
+	bool userInteraction = true;
 
-	while (!finished)
+	while (!fDone || !gDone)
 	{
-		Sleep(10);
-
-		auto status = future.wait_for(0ms);
-
-		if (status == future_status::ready)
+		Sleep(10000);
+		if (userInteraction)
 		{
-			std::cout << "Threads finished" << std::endl;
-			finished = true;
-		}
-		else
-		{
-			std::cout << "Threads still running" << std::endl;
-		}
-
-		if (!finished)
-		{
-
 			char decision;
-			cout << "Would you like to wait for the threads to finish processing? [y/n]" << endl;
-			
+			cout << "Continue execution - [1]\nWait for all the threads to finish execution - [2]\nBreak execution - [3]?" << endl;
 			cin >> decision;
 
-			if (decision == 'y')
+			if (decision == '1')
 			{
 				continue;
 			}
-			else if (decision == 'n')
+			else if (decision == '2')
+			{
+				userInteraction = false;
+			}
+			else if (decision == '3')
 			{
 				return 0;
 			}
@@ -69,9 +70,9 @@ int main()
 			}
 		}
 	}
-	
-	cout << th1.get() << endl;
-	cout << th2.get() << endl;
+
+	bool result = fFuture.get() || gFuture.get();
+	cout << endl << "f(x) || g(x) = " << result << endl;
 
 	return 0;
 }
@@ -82,7 +83,7 @@ int f(int x)
 
 	for (int i = x; i > 0; --i)
 	{
-		cout << endl << "Function F now sleeps for " << i << " seconds" << endl;
+		//cout << endl << "Function F now sleeps for " << i << " seconds" << endl;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
 	}
@@ -97,7 +98,7 @@ int g(int x)
 
 	for (int i = 2*x; i > 0; --i)
 	{
-		cout << endl << "Function G now sleeps for " << i << " seconds" << endl;
+		//cout << endl << "Function G now sleeps for " << i << " seconds" << endl;
 		result += i;
 		this_thread::sleep_for(chrono::seconds(i));
 	}
