@@ -25,7 +25,7 @@ int main()
 
 	auto th1 = async(f, F_INPUT);
 	auto th2 = async(g, G_INPUT);
-
+	
 	bool finished = false;
 
 	while (!finished)
